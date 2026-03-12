@@ -1,0 +1,52 @@
+-- Grow a Garden Universal Seed Spawner (2026 working variant)
+-- Bulut için özel basit versiyon 🌱
+-- Executor'a direkt yapıştır
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Remote event'leri bul (oyun güncellenirse isim değişebilir)
+local spawnRemoteName = "SpawnSeed"   -- çoğu scriptte bu veya benzeri
+local buyRemoteName   = "PurchaseSeed" -- fallback için
+
+-- Remote bulma fonksiyonu
+local function getRemote(name)
+    for _, v in ipairs(ReplicatedStorage:GetDescendants()) do
+        if v:IsA("RemoteEvent") and string.find(string.lower(v.Name), string.lower(name)) then
+            return v
+        end
+    end
+    return nil
+end
+
+local spawnRemote = getRemote(spawnRemoteName) or getRemote("Plant") or getRemote("Seed")
+local buyRemote   = getRemote(buyRemoteName)   or getRemote("Buy")
+
+if not spawnRemote and not buyRemote then
+    warn("Remote bulunamadı! Oyun güncellenmiş olabilir. Başka script dene.")
+    return
+end
+
+-- Spawn etmek istediğin seed isimleri (büyük-küçük harf duyarlı olabilir)
+-- Örnek isimler: SunflowerSeed, CarrotSeed, GoldenAppleSeed, CrystalSeed, DinoEgg vb.
+local seedToSpawn = "GoldenAppleSeed"   -- ← BURAYI DEĞİŞTİR istediğin tohumla
+
+local amount = 50   -- Kaç tane spawn edilsin (çok koyarsan lag / kick yiyebilirsin)
+
+print("Seed Spawner aktif! Spawn ediliyor: " .. seedToSpawn .. " x" .. amount)
+
+for i = 1, amount do
+    if spawnRemote then
+        pcall(function()
+            spawnRemote:FireServer(seedToSpawn, 1)  -- direkt spawn denemesi
+        end)
+    elseif buyRemote then
+        pcall(function()
+            buyRemote:FireServer(seedToSpawn, 999999)  -- ucuza alıp env'e ekletme denemesi
+        end)
+    end
+    task.wait(0.1)  -- anti-spam için ufak delay
+end
+
+print("Spawn tamamlandı! Envanterine bak 🌿 | Eğer gelmediyse seed ismini kontrol et veya başka remote dene.")
